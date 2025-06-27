@@ -1,0 +1,61 @@
+{% extends 'main.html' %}
+
+{% block content %}
+
+<div>
+    <title>User Page</title>
+</div>
+<div>
+    <h1>Welcome, {{ user.username }}!</h1>
+    <p>This is your trading dashboard.</p>
+</div>
+<style>
+    .dashboard_container{
+        display: grid;
+        grid-template-columns: 1fr 1fr 2fr;
+    }
+
+</style>
+<div>
+    {% if user.is_authenticated %}
+    <h5> Logged in as {{user.username}} </h5>
+    {% else %}
+    <h5> Guest </h5>
+    {% endif %}
+</div>
+<div class="dashboard_container">
+    <div>
+        <h2> Current net worth </h2>
+        <li>${{ net_worth }} </li>
+    </div>
+    <div>
+        <h2> Current Holdings </h2>
+        {% if user.is_authenticated %}
+            {% if holdings %}
+            <ul>
+                {% for stock, qty in holdings.items %}
+                    <li>{{ stock.symbol }} - {{ qty }} shares</li>
+                {% endfor %}
+                </ul>
+            {% else %}
+                <p>No holdings yet.</p>
+            {% endif %}
+        {% else %}
+        <P>Please Log in to see holdings</P>
+        {% endif %}
+    </div>
+    <div>
+        <a href="{% url 'stock_list' %}">Stock List</a>
+    </div>
+</div>
+
+
+
+
+
+
+
+
+
+
+{% endblock %}

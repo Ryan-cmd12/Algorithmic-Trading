@@ -1,0 +1,31 @@
+{% extends 'main.html' %}
+
+{% block content %}
+<h2>Stock List</h2>
+
+<form method="get">
+    <input type="text" name="q" value="{{ query }}" placeholder="Search stocks...">
+    <button type="submit">Search</button>
+</form>
+
+<table border="1">
+    <tr>
+        <th>Symbol</th>
+        <th>Name</th>
+        <th>Latest Price</th>
+        <th>Last Updated</th>
+        <th>Graph</th>
+        <th>Trade</th>
+    </tr>
+    {% for stock in stocks %}
+    <tr>
+        <td>{{ stock.symbol }}</td>
+        <td>{{ stock.name }}</td>
+        <td>${{ stock.latest_price|floatformat:2 }}</td>
+        <td>{{ stock.latest_price_date }}</td>
+        <td>Graph</td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% endblock %}
