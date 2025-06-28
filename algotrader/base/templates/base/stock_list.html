@@ -2,30 +2,53 @@
 
 {% block content %}
 <h2>Stock List</h2>
+<style>
+    .stock_table{
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+</style>
+<div class="stock_table">
+    <div>
+        <form method="get">
+            <input type="text" name="q" value="{{ query }}" placeholder="Search stocks...">
+            <button type="submit">Search</button>
+        </form>
+        <table border="1">
+            <tr>
+                <th>Symbol</th>
+                <th>Name</th>
+                <th>Latest Price</th>
+                <th>Last Updated</th>
+                <th>Graph</th>
+                <th>Trade</th>
+            </tr>
+            {% for stock in stocks %}
+            <tr>
+                <td>{{ stock.symbol }}</td>
+                <td>{{ stock.name }}</td>
+                <td>${{ stock.latest_price|floatformat:2 }}</td>
+                <td>{{ stock.latest_price_date }}</td>
+                <td>
+                    <button type="button" onclick="loadgraph('{{ stock.symbol }}')">Graph</button>
+                </td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
 
-<form method="get">
-    <input type="text" name="q" value="{{ query }}" placeholder="Search stocks...">
-    <button type="submit">Search</button>
-</form>
+    <div id="graph-container" style="margin-top:20px">
+        <h3>30 Day Price Chart for {{ stock.symbol }}</h3>
+        <img id="stockgraph" src="" alt="Stock Graph" width="600" height="400">
 
-<table border="1">
-    <tr>
-        <th>Symbol</th>
-        <th>Name</th>
-        <th>Latest Price</th>
-        <th>Last Updated</th>
-        <th>Graph</th>
-        <th>Trade</th>
-    </tr>
-    {% for stock in stocks %}
-    <tr>
-        <td>{{ stock.symbol }}</td>
-        <td>{{ stock.name }}</td>
-        <td>${{ stock.latest_price|floatformat:2 }}</td>
-        <td>{{ stock.latest_price_date }}</td>
-        <td>Graph</td>
-    </tr>
-    {% endfor %}
-</table>
+    </div>
+</div>
+
+<script>
+function loadgraph(symbol) {
+    const img = document.getElementById("stockgraph");
+    img.src = `/stock_graph/?symbol=${symbol}&_=${Date.now()}`; // Avoid caching
+}
+</script>
 
 {% endblock %}

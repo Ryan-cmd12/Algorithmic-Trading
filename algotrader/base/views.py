@@ -13,6 +13,9 @@ from django.contrib.auth import authenticate, login, logout
 #from django.contrib.auth import logout as auth_logout
 from .forms import Register_form
 from django.db.models import Q
+from datetime import timedelta, datetime
+import matplotlib.pyplot as plt
+from io import BytesIO
 
 # Create your views here.
 
@@ -102,6 +105,36 @@ def stock_list(request):
     )
     context = {'stocks': stocks, 'query':query}
     return render(request, 'base/stock_list.html', context)
+
+
+def stock_graph_view(request):
+    symbol = request.GET.get('symbol')
+    stock = Stock.objects.get(symbol=symbol)
+    latest_price_subquery = PriceHistory.objects.filter(stock=OuterRef('pk')).order_by('-date')
+    curr_day = Subquery(latest_price_subquery.values('date')[:1])
+    start_day = curr_day - timedelta(days=30)
+    price_data= PriceHistory.objects.filter(stock=stock, date__gte=start_day).order_by('date')
+    dates = []
+    prices = []
+    for record in price_data:
+        dates.append(record.date)
+        prices.append(record.price)
+
+    plt.figure(figsize=(8, 5))
+    plt.plot(dates, prices, marker='o')
+    plt.title(f"{stock.symbol} - Last 30 Days Price")
+    plt.xlabel("Date")
+    plt.ylabel("Close Price")
+    plt.grid(True)
+    plt.tight_layout()
+
+    buf = BytesIO()
+    plt.savefig(buf, format='png')
+    plt.close()
+    buf.seek(0)
+
+    # Return image as response
+    return HttpResponse(buf.getvalue(), content_type='image/png')
 
 
 @login_required
