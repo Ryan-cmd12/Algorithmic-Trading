@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 import pandas as pd
-from events import SignalEvent
+from base.engine.events import SignalEvent
 #short desc of each strategy for me 
 
 

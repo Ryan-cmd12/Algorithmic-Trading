@@ -3,7 +3,7 @@ from datetime import date
 import pandas as pd
 from datetime import timedelta
 from collections import deque
-from events import MarketEvent
+from base.engine.events import MarketEvent
 
 class HistoricCSVDataHandler:
     def __init__(self,events, symbols): #events: event queue, symbols: list of tickers
