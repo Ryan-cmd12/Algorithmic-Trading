@@ -54,7 +54,7 @@ class HistoricCSVDataHandler:
     def get_latest_bar(self,symbol):
         return self.latest_symbol_data[symbol][-1]
     def get_latest_bars(self,symbol,N=1):
-        return list(self.latest_symbol_data[symbol][-N:])
+        return list(self.latest_symbol_data[symbol])[-N:] #list for slicing
     def get_latest_bar_datetime(self,symbol):
         return self.get_latest_bar(symbol)[0]
     def get_latest_bar_value(self,symbol):

@@ -15,7 +15,7 @@ class SimulatedExecutionHander(ExecutionHandler):
         symbol = order_event.symbol
         qty = order_event.quantity
         direction = order_event.direction
-        timeindex = order_event.current_date
+        timeindex = self.data_handler.current_date
         fill_price = self.data_handler.get_latest_bar_value(symbol)
 
         fill = FillEvent(

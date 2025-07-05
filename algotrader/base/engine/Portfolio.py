@@ -22,19 +22,19 @@ class Portfolio:
     def update_timeindex(self):
         dt = self.data_handler.current_date #update dt w curr date
 
-        position = {symbol: self.current_positions[symbol] for symbol in self.symbols}
+        position = {symbol: self.curr_positions[symbol] for symbol in self.symbols}
         position['datetime'] = dt
         self.all_positions.append(position)
 
         holdings = {
             'datetime' :dt,
             'cash' : self.curr_holdings['cash'],
-            'commission' : self.current_holdings['commission'],
+            'commission' : self.curr_holdings['commission'],
             'total'  : 0.0, #initialised as 0, added below
         }
 
         for symbol in self.symbols:
-            market_value = self.current_positions[symbol] * self.data_handler.get_latest_bar_value[symbol]
+            market_value = self.curr_positions[symbol] * self.data_handler.get_latest_bar_value(symbol)
             holdings[symbol] = market_value
             holdings['total'] += market_value
         
@@ -44,17 +44,20 @@ class Portfolio:
     def update_signal(self, signal): #create an orderevent n put it on queue
         order = None
         symbol = signal.symbol
-        direction = self.signal_type.upper()
-        strength = self.strength
+        direction = signal.signal_type.upper()
+        strength = signal.strength
 
-        market_qty = 100
+        market_qty = 100 #number of shares
         curr_price = self.data_handler.get_latest_bar_value(symbol)
-        
+        curr_qty = self.curr_positions[symbol]
+
         if direction == 'BUY':
             order = OrderEvent(symbol=symbol, order_type='MKT', quantity=market_qty, direction='BUY')
         elif direction == 'SELL':
-            order = OrderEvent(symbol=symbol, order_type='MKT', quantity=market_qty, direction='SELL')
-
+            if curr_qty >= market_qty:
+                order = OrderEvent(symbol=symbol, order_type='MKT', quantity=market_qty, direction='SELL')
+            else:
+                print('not enough shares to sell')
         if order:
             self.events.put(order)
             print(f'Order created: {order.direction} {order.quantity} of {symbol} at {round(curr_price,2)}')
@@ -70,7 +73,9 @@ class Portfolio:
         cost = fill_cost * qty
         commission = fill.commission
 
-        self.curr_positions[symbol] += fill.dir * qty
-
-        self.curr_holdings['cash'] -= (cost + commission) * fill_dir
+        self.curr_positions[symbol] += fill_dir * qty
+        if fill_dir ==1:
+            self.curr_holdings['cash'] -= (cost + commission)
+        else:
+            self.curr_holdings['cash'] += (cost + commission)
         self.curr_holdings['commission'] += commission
