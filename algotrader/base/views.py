@@ -62,7 +62,11 @@ def logoutUser(request):
 
 @login_required(login_url='login')
 def dashboard(request):
-    portfolio = get_object_or_404(Portfolio, user=request.user)
+    #portfolio = get_object_or_404(Portfolio, user=request.user)
+    portfolio, created = Portfolio.objects.get_or_create(
+        user=request.user,
+        defaults={'cash': 0}
+    )
     trades = Trade.objects.filter(portfolio=portfolio)
     trades_dashboard = trades.order_by('-date')[:10]
     #.values(symbolstock)creates a dictionary {'symbol_stock':Stock.name}
@@ -110,8 +114,13 @@ def stock_list(request):
 def stock_graph_view(request):
     symbol = request.GET.get('symbol')
     stock = Stock.objects.get(symbol=symbol)
-    latest_price_subquery = PriceHistory.objects.filter(stock=OuterRef('pk')).order_by('-date')
-    curr_day = Subquery(latest_price_subquery.values('date')[:1])
+
+    latest_record = PriceHistory.objects.filter(stock=stock).order_by('-date').first()
+    print("symbol:", symbol)
+    print("latest_record:", latest_record.date if latest_record else None)
+    if latest_record is None:
+        return HttpResponse("No data found", status=404)
+    curr_day = latest_record.date
     start_day = curr_day - timedelta(days=30)
     price_data= PriceHistory.objects.filter(stock=stock, date__gte=start_day).order_by('date')
     dates = []
@@ -122,7 +131,7 @@ def stock_graph_view(request):
 
     plt.figure(figsize=(8, 5))
     plt.plot(dates, prices, marker='o')
-    plt.title(f"{stock.symbol} - Last 30 Days Price")
+    plt.title(f"{stock.symbol} - Last 30 Days Price test")
     plt.xlabel("Date")
     plt.ylabel("Close Price")
     plt.grid(True)

@@ -38,7 +38,7 @@
     </div>
 
     <div id="graph-container" style="margin-top:20px">
-        <h3>30 Day Price Chart for {{ stock.symbol }}</h3>
+        <h3 id = "graph-title">30 Day Price Chart</h3>
         <img id="stockgraph" src="" alt="Stock Graph" width="600" height="400">
 
     </div>
@@ -47,7 +47,9 @@
 <script>
 function loadgraph(symbol) {
     const img = document.getElementById("stockgraph");
+    const title = document.getElementById("graph-title");
     img.src = `/stock_graph/?symbol=${symbol}&_=${Date.now()}`; // Avoid caching
+    title.textContent = `30 Day Price Chart for ${symbol}`;
 }
 </script>
 

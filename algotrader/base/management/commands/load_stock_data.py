@@ -3,6 +3,8 @@ from base.models import Stock, PriceHistory
 import yfinance as yf
 from datetime import datetime
 import pandas as pd
+import requests
+from io import StringIO
 
 
 class Command(BaseCommand):
@@ -39,8 +41,11 @@ class Command(BaseCommand):
             stocks.append((symbol.upper(),symbol.upper()))
         else:
             url = 'https://en.wikipedia.org/wiki/List_of_S%26P_500_companies'
+            headers = {'User-Agent': 'Mozilla/5.0'}
             try:
-                df = pd.read_html(url)[0]
+                response = requests.get(url, headers=headers, timeout=20)
+                response.raise_for_status()
+                df = pd.read_html(StringIO(response.text))[0]
                 stocks = [(row['Symbol'].replace('.','-'),row['Security']) for _,row in df.iterrows()]
             except Exception as e:
                 print(f'error loading {e}')
