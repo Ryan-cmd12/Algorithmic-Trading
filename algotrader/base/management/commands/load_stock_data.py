@@ -56,7 +56,18 @@ class Command(BaseCommand):
             if created:
                 print(f'created new stock: {symbol} - {name}')
             try:
-                data = yf.download(symbol, period=period, interval=interval,progress=False)
+                #data = yf.download(symbol, period=period, interval=interval,progress=False)
+                data = yf.download(
+                    symbol,
+                    period=period,
+                    interval=interval,
+                    progress=False,
+                    auto_adjust=False,
+                    group_by='column'
+                )
+
+                if isinstance(data.columns, pd.MultiIndex):
+                    data.columns = data.columns.get_level_values(0)
                 if data.empty:
                     print(f'no data for {symbol}, continuing')
                     continue
@@ -67,7 +78,13 @@ class Command(BaseCommand):
                     PriceHistory.objects.update_or_create(
                         stock=stock,
                         date=date.date(),
-                        defaults={'price': row['Close']}
+                        defaults={
+                            'open': row['Open'],
+                            'high': row['High'],
+                            'low': row['Low'],
+                            'close': row['Close'],
+                            'volume': int(row['Volume']) if pd.notna(row['Volume']) else None,
+                        }
                     )
                     count += 1
                 print(f'{symbol}: {count} records updated')

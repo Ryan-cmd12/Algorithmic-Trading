@@ -19,6 +19,7 @@
                 <th>Symbol</th>
                 <th>Name</th>
                 <th>Latest Price</th>
+                <th>test</th>
                 <th>Last Updated</th>
                 <th>Graph</th>
                 <th>Trade</th>
@@ -27,7 +28,8 @@
             <tr>
                 <td>{{ stock.symbol }}</td>
                 <td>{{ stock.name }}</td>
-                <td>${{ stock.latest_price|floatformat:2 }}</td>
+                <td>${{ stock.latest_close|floatformat:2 }}</td>
+                <td>{{ stock.latest_low }}</td>
                 <td>{{ stock.latest_price_date }}</td>
                 <td>
                     <button type="button" onclick="loadgraph('{{ stock.symbol }}')">Graph</button>

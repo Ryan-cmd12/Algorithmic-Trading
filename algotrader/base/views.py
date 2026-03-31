@@ -104,8 +104,9 @@ def stock_list(request):
     #     })
     #subquery searches each row in the outeref [:1] to find latest price n date
     stocks = stocks.annotate(
-        latest_price=Subquery(latest_price_subquery.values('price')[:1]),
-        latest_price_date=Subquery(latest_price_subquery.values('date')[:1])
+        latest_close=Subquery(latest_price_subquery.values('close')[:1]),
+        latest_low = Subquery(latest_price_subquery.values('low')[:1]),
+        latest_price_date=Subquery(latest_price_subquery.values('date')[:1]),
     )
     context = {'stocks': stocks, 'query':query}
     return render(request, 'base/stock_list.html', context)
@@ -127,7 +128,7 @@ def stock_graph_view(request):
     prices = []
     for record in price_data:
         dates.append(record.date)
-        prices.append(record.price)
+        prices.append(record.close)
 
     plt.figure(figsize=(8, 5))
     plt.plot(dates, prices, marker='o')
