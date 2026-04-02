@@ -3,6 +3,7 @@ from base.models import FuturesContract, FuturesPriceHistory
 import pandas as pd
 import re
 import requests
+import yfinance as yf
 
 CODE_TO_MNTH = {
     "F": 1,   # Jan
@@ -118,4 +119,7 @@ class Command(BaseCommand):
         futures_contract, created = FuturesContract.objects.get_or_create(symbol = contract, defaults={'root_symbol': root_symbol, 'month_code': mnth, 'year': year})
         if created:
             print(f"Created new futures contract: {contract} - Root: {root_symbol}, Month: {mnth}, Year: {year}")
-        
+        yahoo_symbol = yahoo_converter(contract)
+        try:
+            data = yf.download(yahoo_symbol, period=period, interval=interval, progress=False)
+            
