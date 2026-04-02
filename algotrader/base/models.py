@@ -20,7 +20,7 @@ class PriceHistory(models.Model):
 
     class Meta:
         #unique tgr ensures no duplicate sets
-        unique_together = ('stock', 'date')
+        constraints = [models.UniqueConstraint(fields = ['stock', 'date'], name='unique_stock_date')]
         ordering = ['date']
     
     def __str__(self):
@@ -38,6 +38,17 @@ class FuturesContract(models.Model):
 class FuturesPriceHistory(models.Model):
     contracts = models.ForeignKey(FuturesContract, on_delete=models.CASCADE, related_name="price_history")
     date = models.DateField(db_index=True)
+    open_price = models.FloatField(null=True, blank = True)
+    high_price = models.FloatField(null=True, blank = True)
+    low_price = models.FloatField(null=True, blank = True)
+    close_price = models.FloatField()
+    volume = models.FloatField(null=True, blank = True)
+
+    class Meta: 
+        constraints = [models.UniqueConstraint(fields=['contracts', 'date'], name='unique_contract_date')]
+
+    def __str__(self):
+        return f"{self.contracts.symbol} on {self.date}: O={self.open_price} H={self.high_price} L={self.low_price} C={self.close_price}"
     
     
 class Portfolio(models.Model):
