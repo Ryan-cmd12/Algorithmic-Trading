@@ -20,7 +20,22 @@ CODE_TO_MNTH = {
     "Z": 12,  # Dec
 }
 
-MNTH_IN_ORDER = {"F", "G", "H", "J", "K", "M", "N", "Q", "U", "V", "X", "Z"}
+MNTH_TO_CODE = {
+    1: "F",
+    2: "G",
+    3: "H",
+    4: "J",
+    5: "K",
+    6: "M",
+    7: "N",
+    8: "Q",
+    9: "U",
+    10: "V",
+    11: "X",
+    12: "Z",
+}
+
+MNTH_IN_ORDER = ["F", "G", "H", "J", "K", "M", "N", "Q", "U", "V", "X", "Z"]
 
 def parse_futures_symbol(symbol):
     match = re.match(r"([A-Z]+)([FGHJKMNQUVXZ])(\d{2})", symbol)
@@ -48,9 +63,9 @@ def generate_contract_list(root_symbol : str, start: int, end: int):
 
 def yahoo_converter(symbol: str):
     root, mnth, year = parse_futures_symbol(symbol)
+    month_code = MNTH_TO_CODE.get(mnth)
     year_suffix = str(year)[-2:]
-    yahoo_symbol = f"{root}=F{year_suffix}{mnth:02d}"
-    return yahoo_symbol
+    return f"{root}{month_code}{year_suffix}.CME"
 
 
 
@@ -93,7 +108,7 @@ class Command(BaseCommand):
             help='Specify interval period'
         )
     def handle(self, *args, **options):
-        contract = options.get('symbol')
+        contract = options.get('contract')
         root = options.get('root')
         start = options.get('start')
         end = options.get('end')
@@ -107,7 +122,6 @@ class Command(BaseCommand):
             contracts = generate_contract_list(root, start, end)
         else:
             print(f"Something went wrong!")
-            return
         
         for contract in contracts:
             try:
@@ -116,10 +130,42 @@ class Command(BaseCommand):
             except ValueError as e: 
                 print(f"Error parsing contract symbol {contract}: {e}")
                 return
-        futures_contract, created = FuturesContract.objects.get_or_create(symbol = contract, defaults={'root_symbol': root_symbol, 'month_code': mnth, 'year': year})
-        if created:
-            print(f"Created new futures contract: {contract} - Root: {root_symbol}, Month: {mnth}, Year: {year}")
-        yahoo_symbol = yahoo_converter(contract)
-        try:
-            data = yf.download(yahoo_symbol, period=period, interval=interval, progress=False)
+            futures_contract, created = FuturesContract.objects.get_or_create(symbol = contract, defaults={'root_symbol': root_symbol, 'month_code': mnth, 'year': year})
+            if created:
+                print(f"Created new futures contract: {contract} - Root: {root_symbol}, Month: {mnth}, Year: {year}")
+            yahoo_symbol = yahoo_converter(contract)
+            try:
+                data = yf.download(yahoo_symbol, period=period, interval=interval, progress=False)
+            except Exception:
+                print(f"Error")
             
+            if data.empty:
+                self.stdout.write(
+                        self.style.WARNING(
+                            f"No data returned for {root_symbol}. "
+                        )
+                )
+            count = 0
+            if isinstance(data.columns, pd.MultiIndex):
+                data.columns = data.columns.get_level_values(0)
+            for date, row in data.iterrows():
+                open_price = row.get('Open')
+                high_price = row.get('High')
+                low_price = row.get('Low')
+                close_price = row.get('Close')
+                volume = row.get('Volume')
+                FuturesPriceHistory.objects.update_or_create(
+                    contracts = futures_contract,
+                    date = date.date(),
+                    defaults= {
+                        'open_price': float(open_price) if pd.notna(open_price) else None,
+                        'high_price': float(high_price) if pd.notna(high_price) else None,
+                        'low_price': float(low_price) if pd.notna(low_price) else None,
+                        'close_price': float(close_price) if pd.notna(close_price) else None,
+                        'volume': float(volume) if pd.notna(volume) else None,
+                    }
+                )
+                count += 1
+                print(f"{contract}: {open_price} : {date}")
+            print(f'{root_symbol}: {count} records updated')
+        print("Finished")
